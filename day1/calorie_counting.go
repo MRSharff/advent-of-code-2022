@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -26,6 +28,30 @@ func part1(input io.Reader) {
 		total += calories
 	}
 	fmt.Println(max)
+}
+
+func part2(input io.Reader) {
+	var calories []int
+	total := 0
+	scanner := bufio.NewScanner(input)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			calories = append(calories, total)
+			total = 0
+			continue
+		}
+		var calorie int
+		_, _ = fmt.Sscanf(line, "%d", &calorie)
+		total += calorie
+	}
+
+	sort.Ints(calories)
+	total = 0
+	for i := len(calories) - 1; i >= len(calories)-3; i-- {
+		total += calories[i]
+	}
+	fmt.Println(total)
 }
 
 func main() {
@@ -54,5 +80,9 @@ func main() {
 
 	f, _ := os.Open("day1/input.txt")
 	defer f.Close()
-	part1(f)
+
+	input, _ := io.ReadAll(f)
+
+	part1(bytes.NewReader(input))
+	part2(bytes.NewReader(input))
 }
