@@ -39,6 +39,26 @@ func part1(r io.Reader) {
 	solve(r, byRucksack)
 }
 
+type Prioritizer func(rucksacks chan Rucksack, priorities chan int)
+
+func solve(r io.Reader, prioritize Prioritizer) {
+	lines := make(chan string, 300)
+	go readLines(r, lines)
+
+	rucksacks := make(chan Rucksack, 300)
+	go readRucksacks(lines, rucksacks)
+
+	priorities := make(chan int, 300)
+	go prioritize(rucksacks, priorities)
+
+	total := 0
+	for p := range priorities {
+		total += p
+	}
+
+	fmt.Println(total)
+}
+
 func byRucksack(rucksacks chan Rucksack, priorities chan int) {
 	for rucksack := range rucksacks {
 		var leftSet, rightSet Set
@@ -100,26 +120,6 @@ func readGroups(rucksacks chan Rucksack, groups chan [3]Rucksack) {
 		}
 	}
 	close(groups)
-}
-
-type Prioritizer func(rucksacks chan Rucksack, priorities chan int)
-
-func solve(r io.Reader, prioritize Prioritizer) {
-	lines := make(chan string, 300)
-	go readLines(r, lines)
-
-	rucksacks := make(chan Rucksack, 300)
-	go readRucksacks(lines, rucksacks)
-
-	priorities := make(chan int, 300)
-	go prioritize(rucksacks, priorities)
-
-	total := 0
-	for p := range priorities {
-		total += p
-	}
-
-	fmt.Println(total)
 }
 
 func priority(i Item) int {
