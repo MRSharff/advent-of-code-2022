@@ -53,7 +53,7 @@ var (
 		'C': Scissors, 'Z': Scissors,
 	}
 
-	scoreMap = map[Shape]int{
+	shapeScores = map[Shape]int{
 		Rock:     1,
 		Paper:    2,
 		Scissors: 3,
@@ -64,6 +64,7 @@ var (
 		Paper:    Rock,
 		Scissors: Paper,
 	}
+
 	loseMap = map[Shape]Shape{
 		Rock:     Paper,
 		Paper:    Scissors,
@@ -103,31 +104,7 @@ func shapeChoosing(ours rune, theirs Shape) int {
 		'C': Scissors, 'Z': Scissors,
 	}
 
-	shapeScore := map[Shape]int{
-		Rock:     1,
-		Paper:    2,
-		Scissors: 3,
-	}[shape[ours]]
-
-	outcomeScore := 0
-
-	if shape[ours] == theirs {
-		outcomeScore = 3
-	} else {
-		win := false
-		switch shape[ours] {
-		case Rock: // our rock beats their scissors
-			win = theirs == Scissors
-		case Paper: // our Paper beats their Rock
-			win = theirs == Rock
-		case Scissors: // our Scissors beats their paper
-			win = theirs == Paper
-		}
-		if win {
-			outcomeScore = 6
-		}
-	} // else we lose and our score does not improve
-	return shapeScore + outcomeScore
+	return scoreRound(shape[ours], theirs)
 }
 
 func outcomeChoosing(ours rune, theirs Shape) int {
@@ -137,20 +114,28 @@ func outcomeChoosing(ours rune, theirs Shape) int {
 		'Z': Win,
 	}
 
-	score := 0
-
 	var shape Shape
 	switch outcomes[ours] {
 	case Win:
 		shape = loseMap[theirs]
-		score += 6
 	case Draw:
 		shape = theirs
-		score += 3
 	case Lose:
 		shape = winMap[theirs]
-		score += 0
 	}
-	score += scoreMap[shape]
-	return score
+	return scoreRound(shape, theirs)
+}
+
+func scoreRound(ours, theirs Shape) int {
+	const (
+		win  = 6
+		draw = 3
+		lose = 0
+	)
+	outcomeScores := map[Shape]map[Shape]int{
+		Rock:     {Rock: draw, Paper: lose, Scissors: win},
+		Paper:    {Rock: win, Paper: draw, Scissors: lose},
+		Scissors: {Rock: lose, Paper: win, Scissors: draw},
+	}
+	return shapeScores[ours] + outcomeScores[ours][theirs]
 }
