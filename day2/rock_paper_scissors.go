@@ -33,56 +33,33 @@ C Z`
 	part2(bytes.NewReader(b))
 }
 
-type Shape int
-type Outcome int
+type Shape = rune
 
 const (
-	Rock Shape = iota
-	Paper
-	Scissors
-
-	Win Outcome = iota
-	Lose
-	Draw
+	Rock     = 'A'
+	Paper    = 'B'
+	Scissors = 'C'
 )
 
 var (
 	shapeMap = map[rune]Shape{
-		'A': Rock, 'X': Rock,
-		'B': Paper, 'Y': Paper,
-		'C': Scissors, 'Z': Scissors,
-	}
-
-	shapeScores = map[Shape]int{
-		Rock:     1,
-		Paper:    2,
-		Scissors: 3,
-	}
-
-	winMap = map[Shape]Shape{
-		Rock:     Scissors,
-		Paper:    Rock,
-		Scissors: Paper,
-	}
-
-	loseMap = map[Shape]Shape{
-		Rock:     Paper,
-		Paper:    Scissors,
-		Scissors: Rock,
+		'A': Rock,
+		'B': Paper,
+		'C': Scissors,
 	}
 )
 
 func part1(r io.Reader) {
-	scoreInput(r, shapeChoosing)
+	scoreInput(r, recommendShape)
 }
 
 func part2(r io.Reader) {
-	scoreInput(r, outcomeChoosing)
+	scoreInput(r, shapeByOutcome)
 }
 
-type Scorer func(ours rune, theirs Shape) int
+type ShapeChooser func(ours, theirs rune) Shape
 
-func scoreInput(r io.Reader, scorer Scorer) {
+func scoreInput(r io.Reader, chooseShape ShapeChooser) {
 	scanner := bufio.NewScanner(r)
 
 	totalScore := 0
@@ -90,52 +67,52 @@ func scoreInput(r io.Reader, scorer Scorer) {
 		line := scanner.Text()
 		theirs := rune(line[0])
 		ours := rune(line[2])
-		score := scorer(ours, shapeMap[theirs])
+		score := scoreRound(chooseShape(ours, theirs), shapeMap[theirs])
 		totalScore += score
 	}
 
 	fmt.Println(totalScore)
 }
 
-func shapeChoosing(ours rune, theirs Shape) int {
-	var shape = map[rune]Shape{
-		'A': Rock, 'X': Rock,
-		'B': Paper, 'Y': Paper,
-		'C': Scissors, 'Z': Scissors,
-	}
-
-	return scoreRound(shape[ours], theirs)
-}
-
-func outcomeChoosing(ours rune, theirs Shape) int {
-	outcomes := map[rune]Outcome{
-		'X': Lose,
-		'Y': Draw,
-		'Z': Win,
-	}
-
-	var shape Shape
-	switch outcomes[ours] {
-	case Win:
-		shape = loseMap[theirs]
-	case Draw:
-		shape = theirs
-	case Lose:
-		shape = winMap[theirs]
-	}
-	return scoreRound(shape, theirs)
-}
-
 func scoreRound(ours, theirs Shape) int {
+	type Score = int
 	const (
 		win  = 6
 		draw = 3
 		lose = 0
 	)
-	outcomeScores := map[Shape]map[Shape]int{
+	shapeScores := map[Shape]Score{
+		Rock:     1,
+		Paper:    2,
+		Scissors: 3,
+	}
+	matchupScores := map[Shape]map[Shape]Score{
 		Rock:     {Rock: draw, Paper: lose, Scissors: win},
 		Paper:    {Rock: win, Paper: draw, Scissors: lose},
 		Scissors: {Rock: lose, Paper: win, Scissors: draw},
 	}
-	return shapeScores[ours] + outcomeScores[ours][theirs]
+	return shapeScores[ours] + matchupScores[ours][theirs]
+}
+
+func recommendShape(ours, _ rune) Shape {
+	return map[rune]Shape{
+		'X': Rock,
+		'Y': Paper,
+		'Z': Scissors,
+	}[ours]
+}
+
+func shapeByOutcome(ours, theirs rune) Shape {
+	type Outcome = rune
+	const (
+		lose = 'X'
+		draw = 'Y'
+		win  = 'Z'
+	)
+	outcomes := map[Outcome]map[Shape]Shape{
+		win:  {Rock: Paper, Paper: Scissors, Scissors: Rock},
+		lose: {Rock: Scissors, Paper: Rock, Scissors: Paper},
+		draw: {Rock: Rock, Paper: Paper, Scissors: Scissors},
+	}
+	return outcomes[ours][theirs]
 }
