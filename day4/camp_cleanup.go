@@ -22,6 +22,9 @@ var (
 func main() {
 	part1(strings.NewReader(testInput))
 	part1(bytes.NewReader(b))
+
+	part2(strings.NewReader(testInput))
+	part2(bytes.NewReader(b))
 }
 
 func part1(r io.Reader) {
@@ -39,6 +42,23 @@ func part1(r io.Reader) {
 
 func fullyContains(a, b, x, y int) bool {
 	return (a <= x && y <= b) || (x <= a && b <= y)
+}
+
+func part2(r io.Reader) {
+	var overlappers []string
+	for line := range lines(r) {
+		var a, b, x, y int
+		_, _ = fmt.Sscanf(line, "%d-%d,%d-%d", &a, &b, &x, &y)
+		if anyOverlap(a, b, x, y) {
+			overlappers = append(overlappers, line)
+		}
+
+	}
+	fmt.Println(len(overlappers))
+}
+
+func anyOverlap(a, b, x, y int) bool {
+	return (a <= x && x <= b) || (x <= a && a <= y)
 }
 
 func lines(r io.Reader) chan string {
