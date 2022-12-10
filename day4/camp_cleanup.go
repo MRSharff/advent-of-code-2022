@@ -27,17 +27,21 @@ func main() {
 	part2(bytes.NewReader(b))
 }
 
-func part1(r io.Reader) {
-	var overlappers []string
-	for line := range lines(r) {
+func solve(r io.Reader, overlapFunc func(a, b, x, y int) bool) {
+	scanner := bufio.NewScanner(r)
+	var overlapCount int
+	for scanner.Scan() {
 		var a, b, x, y int
-		_, _ = fmt.Sscanf(line, "%d-%d,%d-%d", &a, &b, &x, &y)
-		if fullyContains(a, b, x, y) {
-			overlappers = append(overlappers, line)
+		_, _ = fmt.Sscanf(scanner.Text(), "%d-%d,%d-%d", &a, &b, &x, &y)
+		if overlapFunc(a, b, x, y) {
+			overlapCount++
 		}
-
 	}
-	fmt.Println(len(overlappers))
+	fmt.Println(overlapCount)
+}
+
+func part1(r io.Reader) {
+	solve(r, fullyContains)
 }
 
 func fullyContains(a, b, x, y int) bool {
@@ -45,30 +49,9 @@ func fullyContains(a, b, x, y int) bool {
 }
 
 func part2(r io.Reader) {
-	var overlappers []string
-	for line := range lines(r) {
-		var a, b, x, y int
-		_, _ = fmt.Sscanf(line, "%d-%d,%d-%d", &a, &b, &x, &y)
-		if anyOverlap(a, b, x, y) {
-			overlappers = append(overlappers, line)
-		}
-
-	}
-	fmt.Println(len(overlappers))
+	solve(r, anyOverlap)
 }
 
 func anyOverlap(a, b, x, y int) bool {
 	return (a <= x && x <= b) || (x <= a && a <= y)
-}
-
-func lines(r io.Reader) chan string {
-	l := make(chan string)
-	go func() {
-		scanner := bufio.NewScanner(r)
-		for scanner.Scan() {
-			l <- scanner.Text()
-		}
-		close(l)
-	}()
-	return l
 }
