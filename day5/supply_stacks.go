@@ -29,9 +29,28 @@ type Stack = string
 func main() {
 	part1(strings.NewReader(testInput))
 	part1(bytes.NewReader(b))
+
+	part2(strings.NewReader(testInput))
+	part2(bytes.NewReader(b))
 }
 
 func part1(r io.Reader) {
+	solve(r, craneMover9000)
+}
+
+func part2(r io.Reader) {
+	solve(r, craneMover9001)
+}
+
+func pop(s Stack) (Stack, Crate) {
+	return s[1:], Crate(s[0])
+}
+
+func push(s Stack, c Crate) string {
+	return c + s
+}
+
+func solve(r io.Reader, crane func(stacks []Stack, move, from, to int)) {
 	scanner := bufio.NewScanner(r)
 	scanner.Scan()
 	line := scanner.Text()
@@ -58,14 +77,15 @@ func part1(r io.Reader) {
 		line = scanner.Text()
 	}
 
+	// skip the empty line between stack state and rearrangement procedure
+	scanner.Scan()
+
 	for scanner.Scan() {
 		var move, from, to int
 		_, _ = fmt.Sscanf(scanner.Text(), "move %d from %d to %d", &move, &from, &to)
-		for i := 0; i < move; i++ {
-			var crate string
-			stacks[from-1], crate = pop(stacks[from-1])
-			stacks[to-1] = push(stacks[to-1], crate)
-		}
+		// cranes are 1 indexed in the rearrangement procedures
+		from, to = from-1, to-1
+		crane(stacks, move, from, to)
 	}
 
 	for i := 0; i < len(stacks); i++ {
@@ -74,10 +94,15 @@ func part1(r io.Reader) {
 	fmt.Println()
 }
 
-func pop(s Stack) (Stack, Crate) {
-	return s[1:], Crate(s[0])
+func craneMover9000(stacks []Stack, move, from, to int) {
+	for i := 0; i < move; i++ {
+		var crate string
+		stacks[from], crate = pop(stacks[from])
+		stacks[to] = push(stacks[to], crate)
+	}
 }
 
-func push(s Stack, c Crate) string {
-	return c + s
+func craneMover9001(stacks []Stack, move, from, to int) {
+	stacks[to] = stacks[from][:move] + stacks[to]
+	stacks[from] = stacks[from][move:]
 }
