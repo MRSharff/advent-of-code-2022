@@ -23,6 +23,9 @@ move 1 from 1 to 2`
 	b, _ = os.ReadFile("day5/input.txt")
 )
 
+type Crate = string
+type Stack = string
+
 func main() {
 	part1(strings.NewReader(testInput))
 	part1(bytes.NewReader(b))
@@ -34,18 +37,19 @@ func part1(r io.Reader) {
 	line := scanner.Text()
 	n := (len(line) + 1) / 4
 
-	stacks := make([][]string, n)
+	stacks := make([]Stack, n)
 	for {
 		if line[1] == '1' {
 			break
 		}
 
-		for i, x := 1, 0; i < len(line); i, x = i+4, x+1 {
-			k := string(line[i])
-			if k == " " {
+		for stackIndex := 0; stackIndex < n; stackIndex++ {
+			crateIndex := (stackIndex * 4) + 1
+			c := Crate(line[crateIndex])
+			if c == " " {
 				continue
 			}
-			stacks[x] = append(stacks[x], k)
+			stacks[stackIndex] = stacks[stackIndex] + c
 		}
 
 		if !scanner.Scan() {
@@ -55,9 +59,9 @@ func part1(r io.Reader) {
 	}
 
 	for scanner.Scan() {
-		var count, from, to int
-		_, _ = fmt.Sscanf(scanner.Text(), "move %d from %d to %d", &count, &from, &to)
-		for i := 0; i < count; i++ {
+		var move, from, to int
+		_, _ = fmt.Sscanf(scanner.Text(), "move %d from %d to %d", &move, &from, &to)
+		for i := 0; i < move; i++ {
 			var crate string
 			stacks[from-1], crate = pop(stacks[from-1])
 			stacks[to-1] = push(stacks[to-1], crate)
@@ -65,15 +69,15 @@ func part1(r io.Reader) {
 	}
 
 	for i := 0; i < len(stacks); i++ {
-		fmt.Print(stacks[i][0])
+		fmt.Print(Crate(stacks[i][0]))
 	}
 	fmt.Println()
 }
 
-func pop(stack []string) ([]string, string) {
-	return stack[1:], stack[0]
+func pop(s Stack) (Stack, Crate) {
+	return s[1:], Crate(s[0])
 }
 
-func push(stack []string, s string) []string {
-	return append([]string{s}, stack...)
+func push(s Stack, c Crate) string {
+	return c + s
 }
