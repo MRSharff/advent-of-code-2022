@@ -55,7 +55,6 @@ func part1(r io.Reader) {
 
 func NewDirectory(scanner *bufio.Scanner) *Directory {
 	d := &Directory{}
-	var totalSize int
 	for scanner.Scan() {
 		line := scanner.Text()
 		switch {
@@ -65,17 +64,15 @@ func NewDirectory(scanner *bufio.Scanner) *Directory {
 			continue
 		case strings.HasPrefix(line, "$ cd"):
 			nd := NewDirectory(scanner)
-			totalSize += nd.size
+			d.size += nd.size
 			d.directories = append(d.directories, nd)
 		default:
 			var size int
-			var fname string
-			_, err := fmt.Sscanf(line, "%d %s", &size, &fname)
+			_, err := fmt.Sscanf(line, "%d ", &size)
 			if err != nil {
 				panic(err)
 			}
-			totalSize += size
-			d.files = append(d.files, &file{size: size})
+			d.size += size
 		}
 	}
 	return d
@@ -93,29 +90,13 @@ func candidatesForDeletion(d *Directory) []*Directory {
 	return candidates
 }
 
-type file struct {
-	size int
-}
-
-func (f *file) Size() int {
-	return f.size
-}
-
 type Directory struct {
 	name string
 	size int
 
 	directories []*Directory
-	files       []*file
 }
 
 func (d *Directory) Size() int {
-	total := 0
-	for _, f := range d.files {
-		total += f.Size()
-	}
-	for _, child := range d.directories {
-		total += child.Size()
-	}
-	return total
+	return d.size
 }
