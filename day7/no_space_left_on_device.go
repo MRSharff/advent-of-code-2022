@@ -47,12 +47,14 @@ func main() {
 
 func part1(r io.Reader) {
 	root := NewDirectory(bufio.NewScanner(r))
-	candidates := candidatesForDeletion(root)
 
 	sum := 0
-	for _, d := range candidates {
-		sum += d.Size()
-	}
+	Visit(root, func(d *Directory) {
+		if d.Size() <= 100_000 {
+			sum += d.Size()
+		}
+	})
+
 	fmt.Println(sum)
 }
 
@@ -67,11 +69,12 @@ func part2(r io.Reader) {
 	requiredSpace := totalRequiredSpace - unusedDiskSpace
 
 	var smallestDirGreaterThanRequired = root
-	for _, d := range allDirs(root) {
+
+	Visit(smallestDirGreaterThanRequired, func(d *Directory) {
 		if d.Size() <= smallestDirGreaterThanRequired.Size() && d.Size() >= requiredSpace {
 			smallestDirGreaterThanRequired = d
 		}
-	}
+	})
 
 	fmt.Println(smallestDirGreaterThanRequired.Size())
 }
@@ -101,18 +104,6 @@ func NewDirectory(scanner *bufio.Scanner) *Directory {
 	return d
 }
 
-func candidatesForDeletion(d *Directory) []*Directory {
-	var candidates []*Directory
-
-	if d.Size() <= 100000 {
-		candidates = append(candidates, d)
-	}
-	for _, child := range d.directories {
-		candidates = append(candidates, candidatesForDeletion(child)...)
-	}
-	return candidates
-}
-
 type Directory struct {
 	name string
 	size int
@@ -124,11 +115,9 @@ func (d *Directory) Size() int {
 	return d.size
 }
 
-func allDirs(d *Directory) []*Directory {
-	var dirs []*Directory
-	for _, child := range d.directories {
-		dirs = append(dirs, child)
-		dirs = append(dirs, allDirs(child)...)
+func Visit(d *Directory, visitorFunc func(*Directory)) {
+	visitorFunc(d)
+	for _, d := range d.directories {
+		Visit(d, visitorFunc)
 	}
-	return dirs
 }
