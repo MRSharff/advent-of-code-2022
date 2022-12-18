@@ -55,32 +55,28 @@ func part1(r io.Reader) {
 
 func NewDirectory(scanner *bufio.Scanner) *Directory {
 	d := &Directory{}
+	var totalSize int
 	for scanner.Scan() {
 		line := scanner.Text()
-		if line == "$ cd .." {
+		switch {
+		case line == "$ cd ..":
 			return d
-		}
-		if strings.HasPrefix(line, "dir") || line == "$ ls" {
+		case strings.HasPrefix(line, "dir") || line == "$ ls":
 			continue
-		}
-		if strings.HasPrefix(line, "$ cd") {
-			var dname string
-			_, err := fmt.Sscanf(line, "$ cd %s", &dname)
+		case strings.HasPrefix(line, "$ cd"):
+			nd := NewDirectory(scanner)
+			totalSize += nd.size
+			d.directories = append(d.directories, nd)
+		default:
+			var size int
+			var fname string
+			_, err := fmt.Sscanf(line, "%d %s", &size, &fname)
 			if err != nil {
 				panic(err)
 			}
-			nd := NewDirectory(scanner)
-			d.directories = append(d.directories, nd)
-			continue
+			totalSize += size
+			d.files = append(d.files, &file{size: size})
 		}
-
-		var size int
-		var fname string
-		_, err := fmt.Sscanf(line, "%d %s", &size, &fname)
-		if err != nil {
-			panic(err)
-		}
-		d.files = append(d.files, &file{size: size})
 	}
 	return d
 }
@@ -106,7 +102,9 @@ func (f *file) Size() int {
 }
 
 type Directory struct {
-	name        string
+	name string
+	size int
+
 	directories []*Directory
 	files       []*file
 }
