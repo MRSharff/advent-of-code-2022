@@ -40,6 +40,9 @@ $ ls
 func main() {
 	part1(strings.NewReader(testInput))
 	part1(bytes.NewReader(b))
+
+	part2(strings.NewReader(testInput))
+	part2(bytes.NewReader(b))
 }
 
 func part1(r io.Reader) {
@@ -51,6 +54,26 @@ func part1(r io.Reader) {
 		sum += d.Size()
 	}
 	fmt.Println(sum)
+}
+
+func part2(r io.Reader) {
+	root := NewDirectory(bufio.NewScanner(r))
+
+	totalDiskSpace := 70_000_000
+	totalRequiredSpace := 30_000_000
+
+	totalDiskSpaceUsed := root.Size()
+	unusedDiskSpace := totalDiskSpace - totalDiskSpaceUsed
+	requiredSpace := totalRequiredSpace - unusedDiskSpace
+
+	var smallestDirGreaterThanRequired = root
+	for _, d := range allDirs(root) {
+		if d.Size() <= smallestDirGreaterThanRequired.Size() && d.Size() >= requiredSpace {
+			smallestDirGreaterThanRequired = d
+		}
+	}
+
+	fmt.Println(smallestDirGreaterThanRequired.Size())
 }
 
 func NewDirectory(scanner *bufio.Scanner) *Directory {
@@ -99,4 +122,13 @@ type Directory struct {
 
 func (d *Directory) Size() int {
 	return d.size
+}
+
+func allDirs(d *Directory) []*Directory {
+	var dirs []*Directory
+	for _, child := range d.directories {
+		dirs = append(dirs, child)
+		dirs = append(dirs, allDirs(child)...)
+	}
+	return dirs
 }
